@@ -198,7 +198,7 @@ http://127.0.0.1:5000
 |------|----------|----------|
 | Admin | `admin` | `admin123` |
 | Employee | `emp1` | `emp123` |
-| Cardholder | `user1` | `card123` |
+| Cardholder | `vasu` | `qwerty` |
 
 > You can also use `emp2`, `emp3`... or `user2`, `user3`... with the same passwords.
 
