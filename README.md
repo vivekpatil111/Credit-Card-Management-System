@@ -118,7 +118,9 @@ The system is built on 12 fully normalized relational tables:
 | 12 | `CARD_OFFER` | Many-to-many: cards and availed offers |
 
 ---
+## E-R Diagram
 
+![CCMS E-R Diagram](er_diagram.jpg)
 ## Project Structure
 
 ```
