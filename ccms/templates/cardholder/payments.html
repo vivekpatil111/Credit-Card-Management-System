@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% block title %}Payments{% endblock %}
+{% block content %}
+
+<div class="wrap">
+
+  <div class="page-header">
+    <div>
+      <div class="page-title">Payments</div>
+      <div class="page-sub">Pay your bills and view payment history</div>
+    </div>
+  </div>
+
+  <!-- Make a Payment -->
+  <div class="form-panel">
+    <div class="form-panel-header">
+      <div class="form-panel-title">Make a Payment</div>
+      <div class="form-panel-sub">Select a bill and pay via your linked bank account</div>
+    </div>
+    <form method="POST">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Select Bill</label>
+          <select name="bill_id" required>
+            {% for b in bills %}
+            <option value="{{ b.Bill_id }}">
+              {{ b.Statement_period }} — ₹{{ "{:,.0f}".format(b.Total_due) }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Bank Account</label>
+          <select name="account_id" required>
+            {% for a in accounts %}
+            <option value="{{ a.Account_id }}">
+              {{ a.Bank_name }} — •••• {{ a.Account_no[-4:] }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Amount (₹)</label>
+          <input name="payment_amt" type="number" placeholder="e.g. 15000" required>
+        </div>
+        <div class="form-group">
+          <label>Payment Mode</label>
+          <select name="payment_mode">
+            <option>UPI</option>
+            <option>NEFT</option>
+            <option>IMPS</option>
+            <option>Debit Card</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Payment Date</label>
+          <input name="payment_date" type="date" required>
+        </div>
+      </div>
+      <button type="submit" class="btn-submit-form">Submit Payment &rarr;</button>
+    </form>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total Payments</div>
+      <div class="stat-val">{{ payments|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Successful</div>
+      <div class="stat-val success">{{ payments|selectattr('Payment_status','eq','Success')|list|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Pending</div>
+      <div class="stat-val warning">{{ payments|selectattr('Payment_status','eq','Pending')|list|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Failed</div>
+      <div class="stat-val danger">{{ payments|selectattr('Payment_status','eq','Failed')|list|length }}</div>
+    </div>
+  </div>
+
+  <!-- Payment History -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-head-title">Payment History</span>
+      <span class="record-count">{{ payments|length }} records</span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Date</th>
+            <th>Bank</th>
+            <th>Period</th>
+            <th style="text-align:right">Amount</th>
+            <th>Mode</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in payments %}
+          <tr>
+            <td><span class="holder-id">#{{ p.Payment_id }}</span></td>
+            <td><span class="mono">{{ p.Payment_date }}</span></td>
+            <td>
+              <div class="bank-wrap">
+                <div class="bank-icon">{{ p.Bank_name[0] }}</div>
+                <span>{{ p.Bank_name }}</span>
+              </div>
+            </td>
+            <td><span class="period-pill">{{ p.Statement_period }}</span></td>
+            <td style="text-align:right"><span class="amount">₹{{ "{:,.0f}".format(p.Payment_amt) }}</span></td>
+            <td><span class="mode-pill">{{ p.Payment_mode }}</span></td>
+            <td>
+              <span class="badge
+                {% if p.Payment_status == 'Success' %}badge-success
+                {% elif p.Payment_status == 'Failed' %}badge-danger
+                {% else %}badge-warning{% endif %}">
+                {{ p.Payment_status }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<style>
+/* ── Form panel ── */
+.form-panel {
+  background: #fff;
+  border: 0.5px solid #e0e0e0;
+  border-radius: var(--border-radius-lg, 12px);
+  padding: 20px 24px 24px;
+  margin-bottom: 20px;
+}
+
+.form-panel-header {
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 0.5px solid #f0f0f0;
+}
+
+.form-panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111;
+}
+
+.form-panel-sub {
+  font-size: 12px;
+  color: #888;
+  margin-top: 3px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-group label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.form-group input,
+.form-group select {
+  height: 36px;
+  padding: 0 10px;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 7px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  color: #111;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.form-group input:focus,
+.form-group select:focus { border-color: #999; }
+
+.btn-submit-form {
+  margin-top: 16px;
+  height: 38px;
+  padding: 0 20px;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-submit-form:hover { background: #333; }
+
+/* ── Bank cell ── */
+.bank-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bank-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: #e8f0fe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #1a56db;
+  flex-shrink: 0;
+}
+
+/* ── Mode pill ── */
+.mode-pill {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: #e8f0fe;
+  color: #1a56db;
+  font-family: 'DM Mono', monospace;
+  white-space: nowrap;
+}
+
+/* ── Period pill ── */
+.period-pill {
+  display: inline-block;
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: #f5f5f5;
+  border: 0.5px solid #e5e5e5;
+  color: #666;
+  font-family: 'DM Mono', monospace;
+  white-space: nowrap;
+}
+</style>
+
+{% endblock %}

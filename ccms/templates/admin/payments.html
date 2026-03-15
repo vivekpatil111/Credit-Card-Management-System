@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block title %}Payments{% endblock %}
+{% block content %}
+
+<div class="wrap">
+
+  <div class="page-header">
+    <div>
+      <div class="page-title">All Payments</div>
+      <div class="page-sub">Payment records across all cardholders</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total</div>
+      <div class="stat-val">{{ payments|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Successful</div>
+      <div class="stat-val success">{{ payments|selectattr('Payment_status','eq','Success')|list|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Pending</div>
+      <div class="stat-val warning">{{ payments|selectattr('Payment_status','eq','Pending')|list|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Failed</div>
+      <div class="stat-val danger">{{ payments|selectattr('Payment_status','eq','Failed')|list|length }}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <span class="card-head-title">Payment Records</span>
+      <div class="card-head-right">
+        <div class="search-wrap">
+          <svg class="search-icon" viewBox="0 0 16 16" fill="none">
+            <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.2"/>
+            <path d="M10 10l3 3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          <input type="text" id="searchInput" placeholder="Search holder, bank..."
+                 oninput="filterTable()">
+        </div>
+        <select id="statusFilter" onchange="filterTable()" class="filter-select">
+          <option value="">All status</option>
+          <option value="Success">Success</option>
+          <option value="Pending">Pending</option>
+          <option value="Failed">Failed</option>
+        </select>
+        <select id="modeFilter" onchange="filterTable()" class="filter-select">
+          <option value="">All modes</option>
+          <option>UPI</option>
+          <option>NEFT</option>
+          <option>IMPS</option>
+          <option>Debit Card</option>
+        </select>
+        <span class="record-count" id="visibleCount">{{ payments|length }} records</span>
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table id="paymentsTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Cardholder</th>
+            <th>Bank</th>
+            <th>Account No</th>
+            <th>Period</th>
+            <th>Date</th>
+            <th style="text-align:right">Amount</th>
+            <th>Mode</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in payments %}
+          <tr data-holder="{{ p.holder_name|lower }}"
+              data-bank="{{ p.Bank_name|lower }}"
+              data-status="{{ p.Payment_status }}"
+              data-mode="{{ p.Payment_mode }}">
+            <td><span class="holder-id">#{{ p.Payment_id }}</span></td>
+            <td>
+              <div class="avatar-wrap">
+                <div class="avatar">{{ p.holder_name.split()[0][0] }}{{ p.holder_name.split()[-1][0] }}</div>
+                <span class="holder-name">{{ p.holder_name }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="bank-wrap">
+                <div class="bank-icon">{{ p.Bank_name[0] }}</div>
+                <span>{{ p.Bank_name }}</span>
+              </div>
+            </td>
+            <td><span class="mono">•••• {{ p.Account_no[-4:] }}</span></td>
+            <td><span class="period-pill">{{ p.Statement_period }}</span></td>
+            <td><span class="mono">{{ p.Payment_date }}</span></td>
+            <td style="text-align:right"><span class="amount">₹{{ "{:,.0f}".format(p.Payment_amt) }}</span></td>
+            <td><span class="mode-pill">{{ p.Payment_mode }}</span></td>
+            <td>
+              <span class="badge
+                {% if p.Payment_status == 'Success' %}badge-success
+                {% elif p.Payment_status == 'Failed' %}badge-danger
+                {% else %}badge-warning{% endif %}">
+                {{ p.Payment_status }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div id="emptyState" style="display:none" class="empty-state">
+        No payments match your search.
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 0.5px solid #e0e0e0;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.card-head-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 9px;
+  width: 13px;
+  height: 13px;
+  color: #bbb;
+  pointer-events: none;
+}
+
+.search-wrap input {
+  height: 32px;
+  padding: 0 10px 0 28px;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 7px;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  color: #111;
+  outline: none;
+  width: 200px;
+  transition: border-color 0.15s;
+}
+
+.search-wrap input:focus { border-color: #999; }
+.search-wrap input::placeholder { color: #ccc; }
+
+.filter-select {
+  height: 32px;
+  padding: 0 8px;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 7px;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  color: #555;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+}
+
+.bank-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bank-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: #e8f0fe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #1a56db;
+  flex-shrink: 0;
+}
+
+.mode-pill {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: #e8f0fe;
+  color: #1a56db;
+  font-family: 'DM Mono', monospace;
+  white-space: nowrap;
+}
+
+.period-pill {
+  display: inline-block;
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: #f5f5f5;
+  border: 0.5px solid #e5e5e5;
+  color: #666;
+  font-family: 'DM Mono', monospace;
+  white-space: nowrap;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 32px;
+  font-size: 13px;
+  color: #aaa;
+  font-family: 'Syne', sans-serif;
+}
+</style>
+
+<script>
+function filterTable() {
+  const query  = document.getElementById('searchInput').value.toLowerCase();
+  const status = document.getElementById('statusFilter').value;
+  const mode   = document.getElementById('modeFilter').value;
+  const rows   = document.querySelectorAll('#paymentsTable tbody tr');
+  let visible  = 0;
+
+  rows.forEach(row => {
+    const matchSearch = !query ||
+      row.dataset.holder.includes(query) ||
+      row.dataset.bank.includes(query);
+    const matchStatus = !status || row.dataset.status === status;
+    const matchMode   = !mode   || row.dataset.mode === mode;
+
+    const show = matchSearch && matchStatus && matchMode;
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+
+  document.getElementById('visibleCount').textContent = visible + ' records';
+  document.getElementById('emptyState').style.display = visible === 0 ? 'block' : 'none';
+}
+</script>
+
+{% endblock %}

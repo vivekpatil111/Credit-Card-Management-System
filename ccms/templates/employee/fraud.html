@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+{% block title %}Fraud Alerts{% endblock %}
+{% block content %}
+
+<div class="wrap">
+
+  <div class="page-header">
+    <div>
+      <div class="page-title">Fraud Alerts</div>
+      <div class="page-sub">Review and resolve suspicious activity</div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total Alerts</div>
+      <div class="stat-val">{{ alerts|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Open</div>
+      <div class="stat-val danger">{{ alerts|selectattr('Alert_status','eq','Open')|list|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Resolved</div>
+      <div class="stat-val success">{{ alerts|selectattr('Alert_status','eq','Resolved')|list|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Alert Types</div>
+      <div class="stat-val">3</div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-head-title">Fraud Alert List</span>
+      <div class="card-head-right">
+        <div class="search-wrap">
+          <svg class="search-icon" viewBox="0 0 16 16" fill="none">
+            <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.2"/>
+            <path d="M10 10l3 3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          <input type="text" id="searchInput" placeholder="Search holder, merchant..."
+                 oninput="filterTable()">
+        </div>
+        <select id="statusFilter" onchange="filterTable()" class="filter-select">
+          <option value="">All status</option>
+          <option value="Open">Open</option>
+          <option value="Resolved">Resolved</option>
+        </select>
+        <select id="typeFilter" onchange="filterTable()" class="filter-select">
+          <option value="">All types</option>
+          <option>Suspicious Transaction</option>
+          <option>High Value Transaction</option>
+          <option>Unusual Location</option>
+        </select>
+        <span class="record-count" id="visibleCount">{{ alerts|length }} records</span>
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table id="fraudTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Date</th>
+            <th>Cardholder</th>
+            <th>Merchant</th>
+            <th style="text-align:right">Amount</th>
+            <th>Alert Type</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in alerts %}
+          <tr data-holder="{{ a.holder_name|lower }}"
+              data-merchant="{{ a.Merchant_name|lower }}"
+              data-status="{{ a.Alert_status }}"
+              data-type="{{ a.Alert_type }}">
+            <td><span class="holder-id">#{{ a.Alert_id }}</span></td>
+            <td><span class="mono">{{ a.Alert_date }}</span></td>
+            <td>
+              <div class="avatar-wrap">
+                <div class="avatar">{{ a.holder_name.split()[0][0] }}{{ a.holder_name.split()[-1][0] }}</div>
+                <span class="holder-name">{{ a.holder_name }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="merchant-wrap">
+                <div class="merchant-icon">{{ a.Merchant_name[0] }}</div>
+                <span>{{ a.Merchant_name }}</span>
+              </div>
+            </td>
+            <td style="text-align:right">
+              <span class="amount">₹{{ "{:,.0f}".format(a.Txn_amount) }}</span>
+            </td>
+            <td>
+              <span class="alert-type-pill
+                {% if a.Alert_type == 'Suspicious Transaction' %}pill-red
+                {% elif a.Alert_type == 'High Value Transaction' %}pill-amber
+                {% else %}pill-blue{% endif %}">
+                {{ a.Alert_type }}
+              </span>
+            </td>
+            <td><div class="desc-cell">{{ a.Description }}</div></td>
+            <td>
+              <span class="badge
+                {% if a.Alert_status == 'Open' %}badge-danger
+                {% else %}badge-success{% endif %}">
+                {{ a.Alert_status }}
+              </span>
+            </td>
+            <td>
+              {% if a.Alert_status == 'Open' %}
+              <a href="{{ url_for('emp_resolve_fraud', id=a.Alert_id) }}"
+                 class="btn-resolve">
+                Resolve
+              </a>
+              {% else %}
+              <span class="resolved-tick">✓ Done</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div id="emptyState" style="display:none" class="empty-state">
+        No alerts match your search.
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 0.5px solid #e0e0e0;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.card-head-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.search-wrap { position: relative; display: flex; align-items: center; }
+
+.search-icon {
+  position: absolute;
+  left: 9px;
+  width: 13px;
+  height: 13px;
+  color: #bbb;
+  pointer-events: none;
+}
+
+.search-wrap input {
+  height: 32px;
+  padding: 0 10px 0 28px;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 7px;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  color: #111;
+  outline: none;
+  width: 190px;
+  transition: border-color 0.15s;
+}
+
+.search-wrap input:focus { border-color: #999; }
+.search-wrap input::placeholder { color: #ccc; }
+
+.filter-select {
+  height: 32px;
+  padding: 0 8px;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 7px;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  color: #555;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+}
+
+.merchant-wrap { display: flex; align-items: center; gap: 8px; }
+
+.merchant-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: #f5f5f5;
+  border: 0.5px solid #e5e5e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  flex-shrink: 0;
+}
+
+.alert-type-pill {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+  font-family: 'DM Mono', monospace;
+}
+
+.pill-red   { background: #fee2e2; color: #991b1b; }
+.pill-amber { background: #fef3c7; color: #92400e; }
+.pill-blue  { background: #e8f0fe; color: #1a56db; }
+
+.desc-cell {
+  font-size: 11px;
+  color: #555;
+  max-width: 180px;
+  line-height: 1.5;
+  white-space: normal;
+}
+
+.btn-resolve {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 5px 11px;
+  border-radius: 6px;
+  text-decoration: none;
+  border: 0.5px solid #86efac;
+  color: #166534;
+  background: transparent;
+  font-family: 'Syne', sans-serif;
+  transition: background 0.12s;
+  white-space: nowrap;
+}
+
+.btn-resolve:hover { background: #dcfce7; }
+
+.resolved-tick {
+  font-size: 11px;
+  color: #aaa;
+  font-family: 'DM Mono', monospace;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 32px;
+  font-size: 13px;
+  color: #aaa;
+  font-family: 'Syne', sans-serif;
+}
+</style>
+
+<script>
+function filterTable() {
+  const query  = document.getElementById('searchInput').value.toLowerCase();
+  const status = document.getElementById('statusFilter').value;
+  const type   = document.getElementById('typeFilter').value;
+  const rows   = document.querySelectorAll('#fraudTable tbody tr');
+  let visible  = 0;
+
+  rows.forEach(row => {
+    const matchSearch = !query ||
+      row.dataset.holder.includes(query) ||
+      row.dataset.merchant.includes(query);
+    const matchStatus = !status || row.dataset.status === status;
+    const matchType   = !type   || row.dataset.type === type;
+
+    const show = matchSearch && matchStatus && matchType;
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+
+  document.getElementById('visibleCount').textContent = visible + ' records';
+  document.getElementById('emptyState').style.display = visible === 0 ? 'block' : 'none';
+}
+</script>
+
+{% endblock %}

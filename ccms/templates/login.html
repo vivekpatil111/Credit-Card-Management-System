@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCMS - Login</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="auth-page">
+
+  <!-- Left panel -->
+  <div class="auth-left">
+    <div class="brand">
+      <div class="brand-icon">💳</div>
+      <span class="brand-name">CCMS</span>
+    </div>
+    <div class="left-content">
+      <h2 class="left-title">Credit Card<br>Management<br>System</h2>
+      <p class="left-sub">Manage cards, bills, transactions and fraud alerts — all in one place.</p>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-dot"></div>
+          Multi-role access control
+        </div>
+        <div class="feature-item">
+          <div class="feature-dot"></div>
+          Real-time fraud detection
+        </div>
+        <div class="feature-item">
+          <div class="feature-dot"></div>
+          Bill & payment tracking
+        </div>
+        <div class="feature-item">
+          <div class="feature-dot"></div>
+          Reward points system
+        </div>
+      </div>
+    </div>
+    <div class="left-footer">Secure · Reliable · Fast</div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="auth-right">
+    <div class="auth-card">
+
+      <div class="auth-header">
+        <h1 class="auth-title">Welcome back</h1>
+        <p class="auth-sub">Sign in to your CCMS account</p>
+      </div>
+
+      {% for cat, msg in get_flashed_messages(with_categories=True) %}
+        <div class="alert alert-{{ cat }}">{{ msg }}</div>
+      {% endfor %}
+
+      <form method="POST">
+        <div class="form-group">
+          <label>Username</label>
+          <div class="input-wrap">
+            <svg class="input-icon" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.2"/>
+              <path d="M2 14c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            </svg>
+            <input type="text" name="username" placeholder="Enter your username" required autofocus>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Password</label>
+          <div class="input-wrap">
+            <svg class="input-icon" viewBox="0 0 16 16" fill="none">
+              <rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+              <path d="M5 7V5a3 3 0 016 0v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            </svg>
+            <input type="password" name="password" id="pwdInput" placeholder="Enter your password" required>
+            <button type="button" class="pwd-toggle" onclick="togglePwd()">
+              <svg id="eyeIcon" viewBox="0 0 16 16" fill="none">
+                <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.2"/>
+                <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit">Sign in &rarr;</button>
+      </form>
+
+      <p class="auth-footer">
+        New user? <a href="{{ url_for('register') }}">Create account</a>
+      </p>
+
+      
+    </div>
+  </div>
+
+</div>
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Syne', sans-serif;
+  background: #f5f4f0;
+  min-height: 100vh;
+  display: flex;
+  align-items: stretch;
+}
+
+.auth-page {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* ── Left panel ── */
+.auth-left {
+  width: 420px;
+  flex-shrink: 0;
+  background: #111;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 40px 44px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: auto;
+}
+
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  background: #fff1;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.brand-name {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.left-content {
+  margin: auto 0;
+  padding: 48px 0;
+}
+
+.left-title {
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+  margin-bottom: 16px;
+}
+
+.left-sub {
+  font-size: 13px;
+  color: #aaa;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #ccc;
+}
+
+.feature-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.left-footer {
+  font-size: 11px;
+  color: #555;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── Right panel ── */
+.auth-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+}
+
+.auth-header {
+  margin-bottom: 28px;
+}
+
+.auth-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #111;
+  letter-spacing: -0.3px;
+}
+
+.auth-sub {
+  font-size: 13px;
+  color: #888;
+  margin-top: 4px;
+}
+
+/* ── Form ── */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #555;
+}
+
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 11px;
+  width: 15px;
+  height: 15px;
+  color: #bbb;
+  pointer-events: none;
+}
+
+.input-wrap input {
+  width: 100%;
+  height: 40px;
+  padding: 0 40px 0 34px;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 8px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  color: #111;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.input-wrap input:focus { border-color: #999; }
+.input-wrap input::placeholder { color: #bbb; }
+
+.pwd-toggle {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: #bbb;
+  display: flex;
+  align-items: center;
+}
+
+.pwd-toggle svg { width: 15px; height: 15px; }
+.pwd-toggle:hover { color: #666; }
+
+.btn-submit {
+  width: 100%;
+  height: 42px;
+  margin-top: 6px;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-submit:hover { background: #333; }
+
+.auth-footer {
+  text-align: center;
+  font-size: 13px;
+  color: #888;
+  margin-top: 16px;
+}
+
+.auth-footer a {
+  color: #111;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.auth-footer a:hover { text-decoration: underline; }
+
+/* ── Divider ── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0 14px;
+}
+
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  height: 0.5px;
+  background: #e5e5e5;
+}
+
+.divider span {
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #bbb;
+  white-space: nowrap;
+}
+
+/* ── Demo credentials ── */
+.credentials {
+  background: #fafafa;
+  border: 0.5px solid #e5e5e5;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.cred-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 0.5px solid #f0f0f0;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.cred-row:last-child { border-bottom: none; }
+.cred-row:hover { background: #f0f0f0; }
+
+.cred-left {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.cred-role {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.cred-role.admin      { background: #e8f0fe; color: #1a56db; }
+.cred-role.employee   { background: #fef3c7; color: #92400e; }
+.cred-role.cardholder { background: #dcfce7; color: #166534; }
+
+.cred-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: #555;
+}
+
+.cred-hint {
+  font-size: 10px;
+  color: #ccc;
+}
+
+/* ── Alerts ── */
+.alert {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 16px;
+  border: 0.5px solid transparent;
+}
+
+.alert-success { background: #dcfce7; color: #166534; border-color: #86efac; }
+.alert-danger  { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+.alert-warning { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .auth-left { display: none; }
+  .auth-right { padding: 32px 20px; }
+}
+</style>
+
+<script>
+function togglePwd() {
+  const input = document.getElementById('pwdInput');
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+function fillLogin(username, password) {
+  document.querySelector('input[name="username"]').value = username;
+  document.getElementById('pwdInput').value = password;
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% block title %}Employee Dashboard{% endblock %}
+{% block content %}
+
+<div class="wrap">
+
+  <!-- Welcome banner -->
+  <div class="welcome-banner">
+    <div class="welcome-left">
+      <div class="welcome-avatar">{{ emp.F_name[0] }}{{ emp.L_name[0] }}</div>
+      <div>
+        <div class="welcome-name">Welcome back, {{ emp.F_name }} {{ emp.L_name }} 👋</div>
+        <div class="welcome-meta">
+          <span class="meta-pill">{{ emp.Department }}</span>
+          <span class="meta-pill">{{ emp.Role }}</span>
+        </div>
+      </div>
+    </div>
+    <span class="role-badge">Employee</span>
+  </div>
+
+  <!-- Section label -->
+  <div class="section-label">My Workspace</div>
+
+  <!-- Row 1 -->
+  <div class="stats-row" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:12px;">
+    <div class="stat-card">
+      <div class="stat-label">Total Cards</div>
+      <div class="stat-val">{{ stats.total_cards }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Active Cards</div>
+      <div class="stat-val success">{{ stats.active_cards }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Transactions</div>
+      <div class="stat-val">{{ stats.total_txns }}</div>
+    </div>
+  </div>
+
+  <!-- Row 2 -->
+  <div class="stats-row" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:24px;">
+    <div class="stat-card">
+      <div class="stat-label">My Open Complaints</div>
+      <div class="stat-val warning">{{ stats.open_complaints }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Open Fraud Alerts</div>
+      <div class="stat-val danger">{{ stats.open_fraud }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Unpaid Bills</div>
+      <div class="stat-val warning">{{ stats.unpaid_bills }}</div>
+    </div>
+  </div>
+
+  <!-- Quick links -->
+  <div class="section-label">Quick Actions</div>
+  <div class="quick-links">
+    <a href="{{ url_for('emp_cards') }}" class="ql-card">
+      <div class="ql-icon">💳</div>
+      <div class="ql-label">Cards</div>
+    </a>
+    <a href="{{ url_for('emp_transactions') }}" class="ql-card">
+      <div class="ql-icon">🔄</div>
+      <div class="ql-label">Transactions</div>
+    </a>
+    <a href="{{ url_for('emp_bills') }}" class="ql-card">
+      <div class="ql-icon">🧾</div>
+      <div class="ql-label">Bills</div>
+    </a>
+    <a href="{{ url_for('emp_complaints') }}" class="ql-card {% if stats.open_complaints > 0 %}ql-alert{% endif %}">
+      <div class="ql-icon">📋</div>
+      <div class="ql-label">Complaints</div>
+      {% if stats.open_complaints > 0 %}
+      <span class="ql-badge">{{ stats.open_complaints }}</span>
+      {% endif %}
+    </a>
+    <a href="{{ url_for('emp_fraud') }}" class="ql-card {% if stats.open_fraud > 0 %}ql-alert{% endif %}">
+      <div class="ql-icon">🚨</div>
+      <div class="ql-label">Fraud Alerts</div>
+      {% if stats.open_fraud > 0 %}
+      <span class="ql-badge">{{ stats.open_fraud }}</span>
+      {% endif %}
+    </a>
+  </div>
+
+</div>
+
+<style>
+.section-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #aaa;
+  margin: 0 0 12px;
+}
+
+.welcome-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #111;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  color: #fff;
+}
+
+.welcome-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.welcome-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #fff2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.welcome-name {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.welcome-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.meta-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  color: #aaa;
+  background: #fff1;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.role-badge {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: #fef3c720;
+  color: #fbbf24;
+  border: 0.5px solid #fbbf2430;
+}
+
+.quick-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
+}
+
+.ql-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 10px;
+  background: #fff;
+  border: 0.5px solid #e5e5e5;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.ql-card:hover {
+  background: #fafafa;
+  border-color: #ccc;
+}
+
+.ql-card.ql-alert {
+  border-color: #fca5a5;
+  background: #fff5f5;
+}
+
+.ql-card.ql-alert:hover { background: #fee2e2; }
+
+.ql-icon { font-size: 22px; line-height: 1; }
+
+.ql-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #555;
+  text-align: center;
+  font-family: 'Syne', sans-serif;
+}
+
+.ql-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 99px;
+  background: #991b1b;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+</style>
+
+{% endblock %}

@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+{% block title %}My Dashboard{% endblock %}
+{% block content %}
+
+<div class="wrap">
+
+  <!-- Welcome banner -->
+  <div class="welcome-banner">
+    <div class="welcome-left">
+      <div class="welcome-avatar">{{ holder.F_name[0] }}{{ holder.L_name[0] }}</div>
+      <div>
+        <div class="welcome-name">Welcome back, {{ holder.F_name }} {{ holder.L_name }} 👋</div>
+        <div class="welcome-meta">
+          <span class="meta-pill">
+            <span class="meta-dot
+              {% if holder.Credit_score >= 750 %}dot-success
+              {% elif holder.Credit_score >= 650 %}dot-warning
+              {% else %}dot-danger{% endif %}">
+            </span>
+            Credit Score: <b>{{ holder.Credit_score }}</b>
+          </span>
+          <span class="meta-pill">
+            Income: <b>₹{{ "{:,.0f}".format(holder.Annual_income) }}</b>
+          </span>
+        </div>
+      </div>
+    </div>
+    <span class="role-badge">Cardholder</span>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">My Cards</div>
+      <div class="stat-val">{{ cards|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Active Cards</div>
+      <div class="stat-val success">{{ cards|selectattr('Card_status','eq','Active')|list|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Recent Txns</div>
+      <div class="stat-val">{{ recent|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Open Complaints</div>
+      <div class="stat-val {% if open_complaints > 0 %}warning{% endif %}">{{ open_complaints }}</div>
+    </div>
+  </div>
+
+  <!-- My Cards -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-head">
+      <span class="card-head-title">My Cards</span>
+      <span class="record-count">{{ cards|length }} cards</span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Card No</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th style="text-align:right">Limit</th>
+            <th style="text-align:right">Available</th>
+            <th>Expiry</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in cards %}
+          <tr>
+            <td>
+              <div class="card-no-wrap">
+                <div class="card-chip"></div>
+                <span class="card-no">•••• •••• •••• {{ c.Card_no[-4:] }}</span>
+              </div>
+            </td>
+            <td><span class="type-pill">{{ c.Card_type }}</span></td>
+            <td>
+              <span class="badge
+                {% if c.Card_status == 'Active' %}badge-success
+                {% elif c.Card_status == 'Blocked' %}badge-danger
+                {% else %}badge-warning{% endif %}">
+                {{ c.Card_status }}
+              </span>
+            </td>
+            <td style="text-align:right"><span class="amount">₹{{ "{:,.0f}".format(c.Credit_limit) }}</span></td>
+            <td style="text-align:right">
+              <div class="balance-wrap">
+                <span class="amount">₹{{ "{:,.0f}".format(c.Available_balance) }}</span>
+                <div class="utilization-bar">
+                  <div class="utilization-fill
+                    {% set used = ((c.Credit_limit - c.Available_balance) / c.Credit_limit * 100)|round %}
+                    {% if used > 75 %}fill-danger{% elif used > 40 %}fill-warning{% else %}fill-success{% endif %}"
+                    style="width:{{ used }}%">
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td><span class="mono">{{ c.Expiry_date }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent Transactions -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-head-title">Recent Transactions</span>
+      <span class="record-count">{{ recent|length }} records</span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Merchant</th>
+            <th>Type</th>
+            <th style="text-align:right">Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in recent %}
+          <tr>
+            <td><span class="mono">{{ t.Txn_date }}</span></td>
+            <td>
+              <div class="merchant-wrap">
+                <div class="merchant-icon">{{ t.Merchant_name[0] }}</div>
+                <span>{{ t.Merchant_name }}</span>
+              </div>
+            </td>
+            <td><span class="type-pill">{{ t.Txn_type }}</span></td>
+            <td style="text-align:right"><span class="amount">₹{{ "{:,.0f}".format(t.Txn_amount) }}</span></td>
+            <td>
+              <span class="badge
+                {% if t.Txn_status == 'Success' %}badge-success
+                {% elif t.Txn_status == 'Failed' %}badge-danger
+                {% else %}badge-warning{% endif %}">
+                {{ t.Txn_status }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<style>
+/* Welcome banner */
+.welcome-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #111;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  color: #fff;
+}
+
+.welcome-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.welcome-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #fff2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.welcome-name {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.welcome-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #aaa;
+  background: #fff1;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.meta-pill b { color: #fff; font-weight: 500; }
+
+.meta-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot-success { background: #4ade80; }
+.dot-warning { background: #fbbf24; }
+.dot-danger  { background: #f87171; }
+
+.role-badge {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: #dcfce720;
+  color: #4ade80;
+  border: 0.5px solid #4ade8030;
+}
+
+/* Merchant icon */
+.merchant-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.merchant-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: #f5f5f5;
+  border: 0.5px solid #e5e5e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  flex-shrink: 0;
+}
+</style>
+
+{% endblock %}

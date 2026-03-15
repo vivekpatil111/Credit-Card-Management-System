@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Cardholders{% endblock %}
+{% block content %}
+
+<div class="wrap">
+  <div class="page-header">
+    <div>
+      <div class="page-title">All Cardholders</div>
+      <div class="page-sub">Registered cardholder directory</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total</div>
+      <div class="stat-val">{{ holders|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Excellent (750+)</div>
+      <div class="stat-val success">{{ holders|selectattr("Credit_score","ge",750)|list|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Good (650–749)</div>
+      <div class="stat-val warning">{{ holders|selectattr("Credit_score","ge",650)|selectattr("Credit_score","lt",750)|list|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Poor (&lt;650)</div>
+      <div class="stat-val danger">{{ holders|selectattr("Credit_score","lt",650)|list|length }}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <span class="card-head-title">Cardholder List</span>
+      <span class="record-count">{{ holders|length }} records</span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>DOB</th>
+            <th>Gender</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>Income</th>
+            <th>Credit Score</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for h in holders %}
+          <tr>
+            <td><span class="holder-id">{{ h.Holder_id }}</span></td>
+            <td>
+              <div class="avatar-wrap">
+                <div class="avatar">{{ h.F_name[0] }}{{ h.L_name[0] }}</div>
+                <span class="holder-name">{{ h.F_name }} {{ h.L_name }}</span>
+              </div>
+            </td>
+            <td><span class="mono">{{ h.DOB }}</span></td>
+            <td><span class="mono">{{ h.Gender }}</span></td>
+            <td><span class="mono">{{ h.Phone_no }}</span></td>
+            <td><span class="mono">{{ h.Email }}</span></td>
+            <td><span class="income">&#8377;{{ "{:,.0f}".format(h.Annual_income) }}</span></td>
+            <td>
+              <span class="badge
+                {% if h.Credit_score >= 750 %}badge-success
+                {% elif h.Credit_score >= 650 %}badge-warning
+                {% else %}badge-danger{% endif %}">
+                {{ h.Credit_score }}
+              </span>
+            </td>
+            <td>
+              <a href="{{ url_for('admin_delete_holder', id=h.Holder_id) }}"
+                 class="btn-delete"
+                 onclick="return confirm('Delete this cardholder?')">
+                Delete
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

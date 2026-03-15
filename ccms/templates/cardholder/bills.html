@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}My Bills{% endblock %}
+{% block content %}
+
+<div class="wrap">
+
+  <div class="page-header">
+    <div>
+      <div class="page-title">My Bill Statements</div>
+      <div class="page-sub">Monthly billing history</div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total Bills</div>
+      <div class="stat-val">{{ bills|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Paid</div>
+      <div class="stat-val success">{{ bills|selectattr('Bill_status','eq','Paid')|list|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Overdue</div>
+      <div class="stat-val danger">{{ bills|selectattr('Bill_status','eq','Overdue')|list|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Unpaid</div>
+      <div class="stat-val warning">{{ bills|selectattr('Bill_status','eq','Unpaid')|list|length }}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <span class="card-head-title">Bill History</span>
+      <span class="record-count">{{ bills|length }} records</span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Bill ID</th>
+            <th>Card No</th>
+            <th>Period</th>
+            <th>Bill Date</th>
+            <th>Due Date</th>
+            <th style="text-align:right">Total Due</th>
+            <th style="text-align:right">Min Due</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in bills %}
+          <tr>
+            <td><span class="holder-id">BL-{{ "%05d"|format(b.Bill_id) }}</span></td>
+            <td>
+              <div class="card-no-wrap">
+                <div class="card-chip"></div>
+                <span class="card-no">•••• {{ b.Card_no[-4:] }}</span>
+              </div>
+            </td>
+            <td><span class="period-pill">{{ b.Statement_period }}</span></td>
+            <td><span class="mono">{{ b.Bill_date }}</span></td>
+            <td>
+              <span class="mono {% if b.Bill_status == 'Overdue' %}text-danger{% endif %}">
+                {{ b.Due_date }}
+              </span>
+            </td>
+            <td style="text-align:right"><span class="amount">₹{{ "{:,.0f}".format(b.Total_due) }}</span></td>
+            <td style="text-align:right"><span class="amount min">₹{{ "{:,.0f}".format(b.Min_due) }}</span></td>
+            <td>
+              <span class="badge
+                {% if b.Bill_status == 'Paid' %}badge-success
+                {% elif b.Bill_status == 'Overdue' %}badge-danger
+                {% else %}badge-warning{% endif %}">
+                {{ b.Bill_status }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<style>
+.period-pill {
+  display: inline-block;
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: #f5f5f5;
+  border: 0.5px solid #e5e5e5;
+  color: #666;
+  font-family: 'DM Mono', monospace;
+  white-space: nowrap;
+}
+
+.amount.min {
+  color: #888;
+  font-weight: 400;
+}
+
+.text-danger {
+  color: #991b1b;
+}
+</style>
+
+{% endblock %}

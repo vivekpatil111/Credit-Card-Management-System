@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+{% block title %}My Cards{% endblock %}
+{% block content %}
+
+<div class="wrap">
+
+  <div class="page-header">
+    <div>
+      <div class="page-title">My Credit Cards</div>
+      <div class="page-sub">All your issued cards at a glance</div>
+    </div>
+  </div>
+
+  <!-- Card tiles -->
+  <div class="card-tiles">
+    {% for c in cards %}
+    <div class="credit-card-tile {% if c.Card_status == 'Blocked' %}tile-blocked{% elif c.Card_status == 'Expired' %}tile-expired{% endif %}">
+      <div class="tile-top">
+        <div class="tile-type">{{ c.Card_type }}</div>
+        <span class="badge
+          {% if c.Card_status == 'Active' %}badge-success
+          {% elif c.Card_status == 'Blocked' %}badge-danger
+          {% else %}badge-warning{% endif %}">
+          {{ c.Card_status }}
+        </span>
+      </div>
+      <div class="tile-chip">
+        <div class="chip"></div>
+      </div>
+      <div class="tile-number">•••• •••• •••• {{ c.Card_no[-4:] }}</div>
+      <div class="tile-bottom">
+        <div class="tile-meta">
+          <div class="tile-meta-label">Issued</div>
+          <div class="tile-meta-val">{{ c.Issue_date }}</div>
+        </div>
+        <div class="tile-meta">
+          <div class="tile-meta-label">Expires</div>
+          <div class="tile-meta-val">{{ c.Expiry_date }}</div>
+        </div>
+        <div class="tile-meta">
+          <div class="tile-meta-label">Reward Pts</div>
+          <div class="tile-meta-val pts">{{ "{:,}".format(c.Points_balance or 0) }}</div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Details table -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-head-title">Card Details</span>
+      <span class="record-count">{{ cards|length }} cards</span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Card No</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th style="text-align:right">Credit Limit</th>
+            <th style="text-align:right">Available</th>
+            <th style="text-align:right">Used</th>
+            <th>Utilization</th>
+            <th>Issue Date</th>
+            <th>Expiry</th>
+            <th style="text-align:right">Reward Pts</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in cards %}
+          {% set used_pct = ((c.Credit_limit - c.Available_balance) / c.Credit_limit * 100)|round %}
+          <tr>
+            <td>
+              <div class="card-no-wrap">
+                <div class="card-chip"></div>
+                <span class="card-no">•••• •••• •••• {{ c.Card_no[-4:] }}</span>
+              </div>
+            </td>
+            <td><span class="type-pill">{{ c.Card_type }}</span></td>
+            <td>
+              <span class="badge
+                {% if c.Card_status == 'Active' %}badge-success
+                {% elif c.Card_status == 'Blocked' %}badge-danger
+                {% else %}badge-warning{% endif %}">
+                {{ c.Card_status }}
+              </span>
+            </td>
+            <td style="text-align:right"><span class="amount">₹{{ "{:,.0f}".format(c.Credit_limit) }}</span></td>
+            <td style="text-align:right"><span class="amount">₹{{ "{:,.0f}".format(c.Available_balance) }}</span></td>
+            <td style="text-align:right"><span class="amount used">₹{{ "{:,.0f}".format(c.Credit_limit - c.Available_balance) }}</span></td>
+            <td>
+              <div class="util-wrap">
+                <div class="utilization-bar" style="width:80px">
+                  <div class="utilization-fill
+                    {% if used_pct > 75 %}fill-danger
+                    {% elif used_pct > 40 %}fill-warning
+                    {% else %}fill-success{% endif %}"
+                    style="width:{{ used_pct }}%">
+                  </div>
+                </div>
+                <span class="util-pct {% if used_pct > 75 %}pct-danger{% elif used_pct > 40 %}pct-warning{% else %}pct-success{% endif %}">
+                  {{ used_pct }}%
+                </span>
+              </div>
+            </td>
+            <td><span class="mono">{{ c.Issue_date }}</span></td>
+            <td><span class="mono">{{ c.Expiry_date }}</span></td>
+            <td style="text-align:right">
+              <span class="pts-badge">{{ "{:,}".format(c.Points_balance or 0) }} pts</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<style>
+/* ── Card tiles ── */
+.card-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.credit-card-tile {
+  background: #111;
+  border-radius: 14px;
+  padding: 22px 22px 18px;
+  color: #fff;
+  min-height: 170px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+.credit-card-tile::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: #fff06;
+  pointer-events: none;
+}
+
+.tile-blocked { background: #3a1a1a; }
+.tile-expired { background: #2a2a2a; }
+
+.tile-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tile-type {
+  font-size: 12px;
+  font-weight: 500;
+  color: #aaa;
+  font-family: 'DM Mono', monospace;
+}
+
+.tile-chip {
+  margin: 14px 0 10px;
+}
+
+.chip {
+  width: 32px;
+  height: 24px;
+  border-radius: 5px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  border: 0.5px solid #fcd34d40;
+}
+
+.tile-number {
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  color: #fff;
+  margin-bottom: 16px;
+}
+
+.tile-bottom {
+  display: flex;
+  gap: 20px;
+}
+
+.tile-meta-label {
+  font-size: 9px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #666;
+  margin-bottom: 3px;
+}
+
+.tile-meta-val {
+  font-size: 12px;
+  font-family: 'DM Mono', monospace;
+  color: #ccc;
+}
+
+.tile-meta-val.pts {
+  color: #fbbf24;
+  font-weight: 500;
+}
+
+/* ── Table extras ── */
+.amount.used {
+  color: #991b1b;
+}
+
+.util-wrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.util-pct {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.pct-success { color: #166534; }
+.pct-warning { color: #92400e; }
+.pct-danger  { color: #991b1b; }
+
+.pts-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: #fef3c7;
+  color: #92400e;
+  font-family: 'DM Mono', monospace;
+}
+</style>
+
+{% endblock %}

@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% block title %}Offers{% endblock %}
+{% block content %}
+
+<div class="wrap">
+
+  <div class="page-header">
+    <div>
+      <div class="page-title">Promotional Offers</div>
+      <div class="page-sub">Active and upcoming card offers</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total Offers</div>
+      <div class="stat-val">{{ offers|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Active</div>
+      <div class="stat-val success">{{ offers|selectattr('Offer_status','eq','Active')|list|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Expired</div>
+      <div class="stat-val danger">{{ offers|selectattr('Offer_status','eq','Expired')|list|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Inactive</div>
+      <div class="stat-val warning">{{ offers|selectattr('Offer_status','eq','Inactive')|list|length }}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <span class="card-head-title">Offers List</span>
+      <div class="card-head-right">
+        <div class="search-wrap">
+          <svg class="search-icon" viewBox="0 0 16 16" fill="none">
+            <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.2"/>
+            <path d="M10 10l3 3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          <input type="text" id="searchInput" placeholder="Search offer name..."
+                 oninput="filterTable()">
+        </div>
+        <select id="statusFilter" onchange="filterTable()" class="filter-select">
+          <option value="">All status</option>
+          <option value="Active">Active</option>
+          <option value="Expired">Expired</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+        <span class="record-count" id="visibleCount">{{ offers|length }} records</span>
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table id="offersTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Offer Name</th>
+            <th>Discount</th>
+            <th style="text-align:right">Min Txn</th>
+            <th>Valid From</th>
+            <th>Valid To</th>
+            <th>Card Type</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for o in offers %}
+          <tr data-name="{{ o.Offer_name|lower }}"
+              data-status="{{ o.Offer_status }}">
+            <td><span class="holder-id">#{{ o.Offer_id }}</span></td>
+            <td>
+              <div class="offer-name-wrap">
+                <div class="offer-icon">🎁</div>
+                <span class="offer-name">{{ o.Offer_name }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="discount-pill
+                {% if o.Discount_pct >= 20 %}disc-high
+                {% elif o.Discount_pct >= 10 %}disc-mid
+                {% else %}disc-low{% endif %}">
+                {{ o.Discount_pct }}% off
+              </span>
+            </td>
+            <td style="text-align:right">
+              <span class="amount">₹{{ "{:,.0f}".format(o.Min_txn_amt) }}</span>
+            </td>
+            <td><span class="mono">{{ o.Valid_from }}</span></td>
+            <td><span class="mono">{{ o.Valid_to }}</span></td>
+            <td><span class="type-pill">{{ o.Card_type }}</span></td>
+            <td>
+              <span class="badge
+                {% if o.Offer_status == 'Active' %}badge-success
+                {% elif o.Offer_status == 'Expired' %}badge-danger
+                {% else %}badge-warning{% endif %}">
+                {{ o.Offer_status }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div id="emptyState" style="display:none" class="empty-state">
+        No offers match your search.
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 0.5px solid #e0e0e0;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.card-head-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 9px;
+  width: 13px;
+  height: 13px;
+  color: #bbb;
+  pointer-events: none;
+}
+
+.search-wrap input {
+  height: 32px;
+  padding: 0 10px 0 28px;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 7px;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  color: #111;
+  outline: none;
+  width: 200px;
+  transition: border-color 0.15s;
+}
+
+.search-wrap input:focus { border-color: #999; }
+.search-wrap input::placeholder { color: #ccc; }
+
+.filter-select {
+  height: 32px;
+  padding: 0 8px;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 7px;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  color: #555;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+}
+
+.offer-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.offer-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: #fef3c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.offer-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #111;
+}
+
+.discount-pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-family: 'DM Mono', monospace;
+  white-space: nowrap;
+}
+
+.disc-high { background: #dcfce7; color: #166534; }
+.disc-mid  { background: #e8f0fe; color: #1a56db; }
+.disc-low  { background: #f5f5f5; color: #555;    }
+
+.empty-state {
+  text-align: center;
+  padding: 32px;
+  font-size: 13px;
+  color: #aaa;
+  font-family: 'Syne', sans-serif;
+}
+</style>
+
+<script>
+function filterTable() {
+  const query  = document.getElementById('searchInput').value.toLowerCase();
+  const status = document.getElementById('statusFilter').value;
+  const rows   = document.querySelectorAll('#offersTable tbody tr');
+  let visible  = 0;
+
+  rows.forEach(row => {
+    const matchSearch = !query || row.dataset.name.includes(query);
+    const matchStatus = !status || row.dataset.status === status;
+
+    const show = matchSearch && matchStatus;
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+
+  document.getElementById('visibleCount').textContent = visible + ' records';
+  document.getElementById('emptyState').style.display = visible === 0 ? 'block' : 'none';
+}
+</script>
+
+{% endblock %}

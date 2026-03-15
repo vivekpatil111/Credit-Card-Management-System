@@ -1,0 +1,407 @@
+{% extends "base.html" %}
+{% block title %}Rewards{% endblock %}
+{% block content %}
+
+<div class="wrap">
+
+  <div class="page-header">
+    <div>
+      <div class="page-title">My Reward Points</div>
+      <div class="page-sub">Track earned, redeemed and balance points</div>
+    </div>
+  </div>
+
+  <!-- Summary stat cards -->
+  <div class="stats-row" style="grid-template-columns: repeat(3, minmax(0,1fr)); margin-bottom: 20px;">
+    <div class="stat-card">
+      <div class="stat-label">Total Earned</div>
+      <div class="stat-val" style="color:#92400e;">
+        {{ "{:,}".format(rewards|sum(attribute='Points_earned')) }} pts
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Redeemed</div>
+      <div class="stat-val" style="color:#991b1b;">
+        {{ "{:,}".format(rewards|sum(attribute='Points_redeemed')) }} pts
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Balance</div>
+      <div class="stat-val success">
+        {{ "{:,}".format(rewards|sum(attribute='Points_balance')) }} pts
+      </div>
+    </div>
+  </div>
+
+  <!-- Redeem Form -->
+<div class="form-panel" style="margin-bottom:20px">
+  <div class="form-panel-header">
+    <div class="form-panel-title">Redeem Points</div>
+    <div class="form-panel-sub">100 pts = ₹10 discount &nbsp;·&nbsp; Minimum 500 points</div>
+  </div>
+  <form method="POST" action="{{ url_for('ch_redeem_points') }}">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Select Card</label>
+        <select name="card_no" required>
+          {% for r in rewards %}
+          <option value="{{ r.Card_no }}">
+            •••• •••• •••• {{ r.Card_no[-4:] }} — {{ r.Card_type }}
+            ({{ "{:,}".format(r.Points_balance) }} pts)
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Points to Redeem</label>
+        <input name="redeem_points" type="number"
+               placeholder="Min. 500 points" min="500" required>
+      </div>
+      <div class="form-group" style="justify-content:flex-end; padding-top:18px">
+        <button type="submit" class="btn-submit-form">Redeem &rarr;</button>
+      </div>
+    </div>
+  </form>
+
+  <div class="redeem-info">
+    <div class="redeem-info-item">
+      <span class="redeem-info-label">500 pts</span>
+      <span class="redeem-info-val">= ₹50 off</span>
+    </div>
+    <div class="redeem-info-item">
+      <span class="redeem-info-label">1,000 pts</span>
+      <span class="redeem-info-val">= ₹100 off</span>
+    </div>
+    <div class="redeem-info-item">
+      <span class="redeem-info-label">5,000 pts</span>
+      <span class="redeem-info-val">= ₹500 off</span>
+    </div>
+    <div class="redeem-info-item">
+      <span class="redeem-info-label">10,000 pts</span>
+      <span class="redeem-info-val">= ₹1,000 off</span>
+    </div>
+  </div>
+</div>
+
+  <!-- Reward tiles -->
+  <div class="reward-tiles">
+    {% for r in rewards %}
+    <div class="reward-tile">
+      <div class="reward-tile-top">
+        <div>
+          <div class="reward-card-type">{{ r.Card_type }}</div>
+          <div class="reward-card-no">•••• •••• •••• {{ r.Card_no[-4:] }}</div>
+        </div>
+        <div class="reward-star">★</div>
+      </div>
+      <div class="reward-balance">{{ "{:,}".format(r.Points_balance) }}</div>
+      <div class="reward-balance-label">points balance</div>
+      <div class="reward-bar-wrap">
+        {% set redeem_pct = (r.Points_redeemed / r.Points_earned * 100)|round if r.Points_earned > 0 else 0 %}
+        <div class="reward-bar">
+          <div class="reward-bar-fill" style="width:{{ redeem_pct }}%"></div>
+        </div>
+        <div class="reward-bar-meta">
+          <span>{{ redeem_pct }}% redeemed</span>
+          <span>Exp: {{ r.Expiry_date }}</span>
+        </div>
+      </div>
+      <div class="reward-tile-footer">
+        <div class="reward-meta-item">
+          <div class="reward-meta-label">Earned</div>
+          <div class="reward-meta-val earned">{{ "{:,}".format(r.Points_earned) }}</div>
+        </div>
+        <div class="reward-meta-item">
+          <div class="reward-meta-label">Redeemed</div>
+          <div class="reward-meta-val redeemed">{{ "{:,}".format(r.Points_redeemed) }}</div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Detail table -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-head-title">Reward Points Summary</span>
+      <span class="record-count">{{ rewards|length }} records</span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Card No</th>
+            <th>Card Type</th>
+            <th style="text-align:right">Earned</th>
+            <th style="text-align:right">Redeemed</th>
+            <th style="text-align:right">Balance</th>
+            <th>Expiry Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rewards %}
+          <tr>
+            <td>
+              <div class="card-no-wrap">
+                <div class="card-chip"></div>
+                <span class="card-no">•••• •••• •••• {{ r.Card_no[-4:] }}</span>
+              </div>
+            </td>
+            <td><span class="type-pill">{{ r.Card_type }}</span></td>
+            <td style="text-align:right">
+              <span class="pts-earned">+{{ "{:,}".format(r.Points_earned) }}</span>
+            </td>
+            <td style="text-align:right">
+              <span class="pts-redeemed">-{{ "{:,}".format(r.Points_redeemed) }}</span>
+            </td>
+            <td style="text-align:right">
+              <span class="pts-badge">{{ "{:,}".format(r.Points_balance) }} pts</span>
+            </td>
+            <td><span class="mono">{{ r.Expiry_date }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<style>
+/* ── Reward tiles ── */
+.reward-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.reward-tile {
+  background: #111;
+  border-radius: 14px;
+  padding: 20px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reward-tile-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.reward-card-type {
+  font-size: 12px;
+  font-weight: 500;
+  color: #aaa;
+  font-family: 'DM Mono', monospace;
+}
+
+.reward-card-no {
+  font-size: 13px;
+  font-family: 'DM Mono', monospace;
+  color: #fff;
+  letter-spacing: 0.06em;
+  margin-top: 3px;
+}
+
+.reward-star {
+  font-size: 20px;
+  color: #fbbf24;
+  line-height: 1;
+}
+
+.reward-balance {
+  font-size: 32px;
+  font-weight: 600;
+  color: #fbbf24;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.reward-balance-label {
+  font-size: 11px;
+  color: #666;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.reward-bar-wrap { margin-bottom: 14px; }
+
+.reward-bar {
+  height: 3px;
+  background: #ffffff15;
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.reward-bar-fill {
+  height: 100%;
+  background: #fbbf24;
+  border-radius: 99px;
+}
+
+.reward-bar-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #555;
+  font-family: 'DM Mono', monospace;
+}
+
+.reward-tile-footer {
+  display: flex;
+  gap: 20px;
+  padding-top: 12px;
+  border-top: 0.5px solid #ffffff10;
+}
+
+.reward-meta-label {
+  font-size: 9px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #555;
+  margin-bottom: 3px;
+}
+
+.reward-meta-val {
+  font-size: 13px;
+  font-family: 'DM Mono', monospace;
+  font-weight: 500;
+}
+
+.reward-meta-val.earned   { color: #4ade80; }
+.reward-meta-val.redeemed { color: #f87171; }
+
+/* ── Table pts ── */
+.pts-earned {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: #166534;
+}
+
+.pts-redeemed {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: #991b1b;
+}
+
+.pts-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: #fef3c7;
+  color: #92400e;
+  font-family: 'DM Mono', monospace;
+}
+</style>
+
+{% endblock %}
+
+.redeem-info {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 0.5px solid #f0f0f0;
+}
+
+.redeem-info-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fef3c7;
+  border-radius: 20px;
+  padding: 4px 12px;
+}
+
+.redeem-info-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #92400e;
+  font-family: 'DM Mono', monospace;
+}
+
+.redeem-info-val {
+  font-size: 11px;
+  color: #92400e;
+  font-family: 'DM Mono', monospace;
+}
+
+.form-panel {
+  background: #fff;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px 24px 24px;
+}
+
+.form-panel-header {
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 0.5px solid #f0f0f0;
+}
+
+.form-panel-title { font-size: 14px; font-weight: 600; color: #111; }
+.form-panel-sub   { font-size: 12px; color: #888; margin-top: 3px; }
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+
+.form-group label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.form-group input,
+.form-group select {
+  height: 36px;
+  padding: 0 10px;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 7px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  color: #111;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.form-group input:focus,
+.form-group select:focus { border-color: #999; }
+.form-group input::placeholder { color: #ccc; }
+
+.btn-submit-form {
+  height: 38px;
+  padding: 0 20px;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  width: 100%;
+}
+
+.btn-submit-form:hover { background: #333; }

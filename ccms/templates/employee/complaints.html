@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% block title %}Complaints{% endblock %}
+{% block content %}
+
+<div class="wrap">
+
+  <div class="page-header">
+    <div>
+      <div class="page-title">My Assigned Complaints</div>
+      <div class="page-sub">Review and resolve complaints assigned to you</div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total</div>
+      <div class="stat-val">{{ complaints|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Open</div>
+      <div class="stat-val danger">{{ complaints|selectattr('Status','eq','Open')|list|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">In Progress</div>
+      <div class="stat-val warning">{{ complaints|selectattr('Status','eq','In Progress')|list|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Resolved</div>
+      <div class="stat-val success">{{ complaints|selectattr('Status','eq','Resolved')|list|length }}</div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-head-title">Complaints</span>
+      <div class="card-head-right">
+        <div class="search-wrap">
+          <svg class="search-icon" viewBox="0 0 16 16" fill="none">
+            <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.2"/>
+            <path d="M10 10l3 3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          <input type="text" id="searchInput" placeholder="Search holder..."
+                 oninput="filterTable()">
+        </div>
+        <select id="statusFilter" onchange="filterTable()" class="filter-select">
+          <option value="">All status</option>
+          <option value="Open">Open</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Resolved">Resolved</option>
+        </select>
+        <span class="record-count" id="visibleCount">{{ complaints|length }} records</span>
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table id="complaintsTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Date</th>
+            <th>Cardholder</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Resolution</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in complaints %}
+          <tr data-holder="{{ c.holder_name|lower }}"
+              data-status="{{ c.Status }}">
+            <td><span class="holder-id">#{{ c.Complaint_id }}</span></td>
+            <td><span class="mono">{{ c.Complaint_date }}</span></td>
+            <td>
+              <div class="avatar-wrap">
+                <div class="avatar">{{ c.holder_name.split()[0][0] }}{{ c.holder_name.split()[-1][0] }}</div>
+                <span class="holder-name">{{ c.holder_name }}</span>
+              </div>
+            </td>
+            <td><div class="desc-cell">{{ c.Description }}</div></td>
+            <td>
+              <span class="badge
+                {% if c.Status == 'Open' %}badge-danger
+                {% elif c.Status == 'In Progress' %}badge-warning
+                {% else %}badge-success{% endif %}">
+                {{ c.Status }}
+              </span>
+            </td>
+            <td>
+              {% if c.Resolution %}
+                <div class="resolution-cell">{{ c.Resolution }}</div>
+              {% else %}
+                <span class="no-resolution">—</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if c.Status != 'Resolved' %}
+              <form method="POST"
+                    action="{{ url_for('emp_resolve_complaint', id=c.Complaint_id) }}"
+                    class="resolve-form">
+                <input name="resolution"
+                       class="resolve-input"
+                       placeholder="Enter resolution..."
+                       required>
+                <button type="submit" class="btn-resolve">Resolve</button>
+              </form>
+              {% else %}
+              <span class="resolved-tick">✓ Done</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div id="emptyState" style="display:none" class="empty-state">
+        No complaints match your search.
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 0.5px solid #e0e0e0;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.card-head-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.search-wrap { position: relative; display: flex; align-items: center; }
+
+.search-icon {
+  position: absolute;
+  left: 9px;
+  width: 13px;
+  height: 13px;
+  color: #bbb;
+  pointer-events: none;
+}
+
+.search-wrap input {
+  height: 32px;
+  padding: 0 10px 0 28px;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 7px;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  color: #111;
+  outline: none;
+  width: 180px;
+  transition: border-color 0.15s;
+}
+
+.search-wrap input:focus { border-color: #999; }
+.search-wrap input::placeholder { color: #ccc; }
+
+.filter-select {
+  height: 32px;
+  padding: 0 8px;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 7px;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  color: #555;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+}
+
+.desc-cell {
+  font-size: 12px;
+  color: #444;
+  max-width: 180px;
+  line-height: 1.5;
+  white-space: normal;
+}
+
+.resolution-cell {
+  font-size: 12px;
+  color: #166534;
+  max-width: 180px;
+  line-height: 1.5;
+  white-space: normal;
+}
+
+.no-resolution { font-size: 13px; color: #ccc; }
+
+/* Resolve form */
+.resolve-form {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.resolve-input {
+  height: 30px;
+  padding: 0 8px;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 6px;
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  color: #111;
+  outline: none;
+  width: 160px;
+  transition: border-color 0.15s;
+}
+
+.resolve-input:focus { border-color: #999; }
+.resolve-input::placeholder { color: #ccc; }
+
+.btn-resolve {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 6px;
+  text-decoration: none;
+  border: 0.5px solid #86efac;
+  color: #166534;
+  background: transparent;
+  cursor: pointer;
+  font-family: 'Syne', sans-serif;
+  transition: background 0.12s;
+  white-space: nowrap;
+}
+
+.btn-resolve:hover { background: #dcfce7; }
+
+.resolved-tick {
+  font-size: 11px;
+  color: #aaa;
+  font-family: 'DM Mono', monospace;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 32px;
+  font-size: 13px;
+  color: #aaa;
+  font-family: 'Syne', sans-serif;
+}
+</style>
+
+<script>
+function filterTable() {
+  const query  = document.getElementById('searchInput').value.toLowerCase();
+  const status = document.getElementById('statusFilter').value;
+  const rows   = document.querySelectorAll('#complaintsTable tbody tr');
+  let visible  = 0;
+
+  rows.forEach(row => {
+    const matchSearch = !query || row.dataset.holder.includes(query);
+    const matchStatus = !status || row.dataset.status === status;
+
+    const show = matchSearch && matchStatus;
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+
+  document.getElementById('visibleCount').textContent = visible + ' records';
+  document.getElementById('emptyState').style.display = visible === 0 ? 'block' : 'none';
+}
+</script>
+
+{% endblock %}

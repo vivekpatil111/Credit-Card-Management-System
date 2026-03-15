@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+{% block title %}Cards{% endblock %}
+{% block content %}
+
+<div class="wrap">
+
+  <div class="page-header">
+    <div>
+      <div class="page-title">All Credit Cards</div>
+      <div class="page-sub">Issued card inventory</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total Cards</div>
+      <div class="stat-val">{{ cards|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Active</div>
+      <div class="stat-val success">{{ cards|selectattr("Card_status","eq","Active")|list|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Blocked</div>
+      <div class="stat-val danger">{{ cards|selectattr("Card_status","eq","Blocked")|list|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Expired</div>
+      <div class="stat-val warning">{{ cards|selectattr("Card_status","eq","Expired")|list|length }}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <span class="card-head-title">Credit Card List</span>
+      <div class="card-head-right">
+        <div class="search-wrap">
+          <svg class="search-icon" viewBox="0 0 16 16" fill="none">
+            <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.2"/>
+            <path d="M10 10l3 3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          <input type="text" id="searchInput" placeholder="Search holder, card no..."
+                 oninput="filterTable()">
+        </div>
+        <select id="statusFilter" onchange="filterTable()" class="filter-select">
+          <option value="">All status</option>
+          <option value="Active">Active</option>
+          <option value="Blocked">Blocked</option>
+          <option value="Expired">Expired</option>
+        </select>
+        <span class="record-count" id="visibleCount">{{ cards|length }} records</span>
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table id="cardsTable">
+        <thead>
+          <tr>
+            <th>Card No</th>
+            <th>Holder</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th style="text-align:right">Credit Limit</th>
+            <th style="text-align:right">Available</th>
+            <th>Utilization</th>
+            <th>Issue Date</th>
+            <th>Expiry</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in cards %}
+          {% set used_pct = ((c.Credit_limit - c.Available_balance) / c.Credit_limit * 100)|round %}
+          <tr data-holder="{{ c.holder_name|lower }}"
+              data-cardno="{{ c.Card_no|lower }}"
+              data-status="{{ c.Card_status }}">
+            <td>
+              <div class="card-no-wrap">
+                <div class="card-chip"></div>
+                <span class="card-no">•••• •••• •••• {{ c.Card_no[-4:] }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="avatar-wrap">
+                <div class="avatar">{{ c.holder_name.split()[0][0] }}{{ c.holder_name.split()[-1][0] }}</div>
+                <span class="holder-name">{{ c.holder_name }}</span>
+              </div>
+            </td>
+            <td><span class="type-pill">{{ c.Card_type }}</span></td>
+            <td>
+              <span class="badge
+                {% if c.Card_status == 'Active' %}badge-success
+                {% elif c.Card_status == 'Blocked' %}badge-danger
+                {% else %}badge-warning{% endif %}">
+                {{ c.Card_status }}
+              </span>
+            </td>
+            <td style="text-align:right"><span class="amount">₹{{ "{:,.0f}".format(c.Credit_limit) }}</span></td>
+            <td style="text-align:right">
+              <div class="balance-wrap">
+                <span class="amount">₹{{ "{:,.0f}".format(c.Available_balance) }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="util-wrap">
+                <div class="utilization-bar">
+                  <div class="utilization-fill
+                    {% if used_pct > 75 %}fill-danger
+                    {% elif used_pct > 40 %}fill-warning
+                    {% else %}fill-success{% endif %}"
+                    style="width:{{ used_pct }}%">
+                  </div>
+                </div>
+                <span class="util-pct
+                  {% if used_pct > 75 %}pct-danger
+                  {% elif used_pct > 40 %}pct-warning
+                  {% else %}pct-success{% endif %}">
+                  {{ used_pct }}%
+                </span>
+              </div>
+            </td>
+            <td><span class="mono">{{ c.Issue_date }}</span></td>
+            <td><span class="mono {% if c.Expiry_date < now|string %}text-danger{% endif %}">
+              {{ c.Expiry_date }}
+            </span></td>
+            <td>
+              <a href="{{ url_for('admin_toggle_card', card_no=c.Card_no) }}"
+                 class="btn-toggle {% if c.Card_status == 'Active' %}btn-block{% else %}btn-unblock{% endif %}">
+                {% if c.Card_status == 'Active' %}Block{% else %}Unblock{% endif %}
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div id="emptyState" style="display:none" class="empty-state">
+        No cards match your search.
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 0.5px solid #e0e0e0;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.card-head-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 9px;
+  width: 13px;
+  height: 13px;
+  color: #bbb;
+  pointer-events: none;
+}
+
+.search-wrap input {
+  height: 32px;
+  padding: 0 10px 0 28px;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 7px;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  color: #111;
+  outline: none;
+  width: 200px;
+  transition: border-color 0.15s;
+}
+
+.search-wrap input:focus { border-color: #999; }
+.search-wrap input::placeholder { color: #ccc; }
+
+.filter-select {
+  height: 32px;
+  padding: 0 8px;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 7px;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  color: #555;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+}
+
+.util-wrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.util-pct {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  min-width: 32px;
+}
+
+.pct-success { color: #166534; }
+.pct-warning { color: #92400e; }
+.pct-danger  { color: #991b1b; }
+
+.text-danger { color: #991b1b; }
+
+.btn-toggle {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 5px 11px;
+  border-radius: 6px;
+  text-decoration: none;
+  white-space: nowrap;
+  font-family: 'Syne', sans-serif;
+  transition: background 0.12s;
+}
+
+.btn-block   { border: 0.5px solid #fde68a; color: #92400e; background: transparent; }
+.btn-block:hover   { background: #fef3c7; }
+.btn-unblock { border: 0.5px solid #86efac; color: #166534; background: transparent; }
+.btn-unblock:hover { background: #dcfce7; }
+
+.empty-state {
+  text-align: center;
+  padding: 32px;
+  font-size: 13px;
+  color: #aaa;
+  font-family: 'Syne', sans-serif;
+}
+</style>
+
+<script>
+function filterTable() {
+  const query  = document.getElementById('searchInput').value.toLowerCase();
+  const status = document.getElementById('statusFilter').value;
+  const rows   = document.querySelectorAll('#cardsTable tbody tr');
+  let visible  = 0;
+
+  rows.forEach(row => {
+    const holder = row.dataset.holder;
+    const cardno = row.dataset.cardno;
+    const rowStatus = row.dataset.status;
+
+    const matchSearch = !query ||
+      holder.includes(query) ||
+      cardno.includes(query);
+
+    const matchStatus = !status || rowStatus === status;
+
+    const show = matchSearch && matchStatus;
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+
+  document.getElementById('visibleCount').textContent = visible + ' records';
+  document.getElementById('emptyState').style.display = visible === 0 ? 'block' : 'none';
+}
+</script>
+
+{% endblock %}

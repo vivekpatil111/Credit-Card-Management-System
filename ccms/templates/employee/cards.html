@@ -1,0 +1,396 @@
+{% extends "base.html" %}
+{% block title %}Cards{% endblock %}
+{% block content %}
+
+<div class="wrap">
+
+  <div class="page-header">
+    <div>
+      <div class="page-title">Card Management</div>
+      <div class="page-sub">Issue new cards and manage existing ones</div>
+    </div>
+  </div>
+
+  <!-- Issue New Card -->
+  <div class="form-panel" style="margin-bottom:20px">
+    <div class="form-panel-header">
+      <div class="form-panel-title">Issue New Card</div>
+      <div class="form-panel-sub">Fill in card details and assign to a cardholder</div>
+    </div>
+    <form method="POST" action="{{ url_for('emp_issue_card') }}">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Card Number</label>
+          <input name="card_no" placeholder="16-digit card number" required>
+        </div>
+        <div class="form-group">
+          <label>Card Type</label>
+          <select name="card_type">
+            <option>Visa Gold</option>
+            <option>Visa Classic</option>
+            <option>Visa Platinum</option>
+            <option>Visa Signature</option>
+            <option>Mastercard Gold</option>
+            <option>Mastercard Classic</option>
+            <option>Mastercard Platinum</option>
+            <option>Mastercard World</option>
+            <option>Amex Gold</option>
+            <option>Amex Classic</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Credit Limit (₹)</label>
+          <input name="credit_limit" type="number" placeholder="e.g. 50000" required>
+        </div>
+        <div class="form-group">
+          <label>CVV</label>
+          <input name="cvv" maxlength="3" placeholder="123" required>
+        </div>
+        <div class="form-group">
+          <label>Issue Date</label>
+          <input name="issue_date" type="date" required>
+        </div>
+        <div class="form-group">
+          <label>Expiry Date</label>
+          <input name="expiry_date" type="date" required>
+        </div>
+        <div class="form-group form-full">
+          <label>Cardholder</label>
+          <select name="holder_id">
+            {% for h in holders %}
+            <option value="{{ h.Holder_id }}">{{ h.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="btn-submit-form">Issue Card &rarr;</button>
+    </form>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total</div>
+      <div class="stat-val">{{ cards|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Active</div>
+      <div class="stat-val success">{{ cards|selectattr('Card_status','eq','Active')|list|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Blocked</div>
+      <div class="stat-val danger">{{ cards|selectattr('Card_status','eq','Blocked')|list|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Expired</div>
+      <div class="stat-val warning">{{ cards|selectattr('Card_status','eq','Expired')|list|length }}</div>
+    </div>
+  </div>
+
+  <!-- Cards Table -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-head-title">All Cards</span>
+      <div class="card-head-right">
+        <div class="search-wrap">
+          <svg class="search-icon" viewBox="0 0 16 16" fill="none">
+            <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.2"/>
+            <path d="M10 10l3 3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          <input type="text" id="searchInput" placeholder="Search holder, phone..."
+                 oninput="filterTable()">
+        </div>
+        <select id="statusFilter" onchange="filterTable()" class="filter-select">
+          <option value="">All status</option>
+          <option value="Active">Active</option>
+          <option value="Blocked">Blocked</option>
+          <option value="Expired">Expired</option>
+        </select>
+        <span class="record-count" id="visibleCount">{{ cards|length }} records</span>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table id="cardsTable">
+        <thead>
+          <tr>
+            <th>Card No</th>
+            <th>Holder</th>
+            <th>Phone</th>
+            <th>Type</th>
+            <th style="text-align:right">Limit</th>
+            <th style="text-align:right">Balance</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in cards %}
+          <tr data-holder="{{ c.holder_name|lower }}"
+              data-phone="{{ c.Phone_no }}"
+              data-status="{{ c.Card_status }}">
+            <td>
+              <div class="card-no-wrap">
+                <div class="card-chip"></div>
+                <span class="card-no">•••• •••• •••• {{ c.Card_no[-4:] }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="avatar-wrap">
+                <div class="avatar">{{ c.holder_name.split()[0][0] }}{{ c.holder_name.split()[-1][0] }}</div>
+                <span class="holder-name">{{ c.holder_name }}</span>
+              </div>
+            </td>
+            <td><span class="mono">{{ c.Phone_no }}</span></td>
+            <td><span class="type-pill">{{ c.Card_type }}</span></td>
+            <td style="text-align:right"><span class="amount">₹{{ "{:,.0f}".format(c.Credit_limit) }}</span></td>
+            <td style="text-align:right">
+              <div class="balance-wrap">
+                <span class="amount">₹{{ "{:,.0f}".format(c.Available_balance) }}</span>
+                {% set used_pct = ((c.Credit_limit - c.Available_balance) / c.Credit_limit * 100)|round %}
+                <div class="utilization-bar">
+                  <div class="utilization-fill
+                    {% if used_pct > 75 %}fill-danger
+                    {% elif used_pct > 40 %}fill-warning
+                    {% else %}fill-success{% endif %}"
+                    style="width:{{ used_pct }}%">
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="badge
+                {% if c.Card_status == 'Active' %}badge-success
+                {% elif c.Card_status == 'Blocked' %}badge-danger
+                {% else %}badge-warning{% endif %}">
+                {{ c.Card_status }}
+              </span>
+            </td>
+            <td>
+              {% if c.Card_status == 'Active' %}
+              <a href="{{ url_for('emp_block_card', card_no=c.Card_no) }}"
+                 class="btn-toggle btn-block"
+                 onclick="return confirm('Block card {{ c.Card_no[-4:] }}?')">
+                Block
+              </a>
+              {% else %}
+              <span class="resolved-tick">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div id="emptyState" style="display:none" class="empty-state">
+        No cards match your search.
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+.form-panel {
+  background: #fff;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px 24px 24px;
+}
+
+.form-panel-header {
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 0.5px solid #f0f0f0;
+}
+
+.form-panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111;
+}
+
+.form-panel-sub {
+  font-size: 12px;
+  color: #888;
+  margin-top: 3px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-full { grid-column: 1 / -1; }
+
+.form-group label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.form-group input,
+.form-group select {
+  height: 36px;
+  padding: 0 10px;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 7px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  color: #111;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.form-group input:focus,
+.form-group select:focus { border-color: #999; }
+.form-group input::placeholder { color: #ccc; }
+
+.btn-submit-form {
+  margin-top: 16px;
+  height: 38px;
+  padding: 0 20px;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-submit-form:hover { background: #333; }
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 0.5px solid #e0e0e0;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.card-head-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 9px;
+  width: 13px;
+  height: 13px;
+  color: #bbb;
+  pointer-events: none;
+}
+
+.search-wrap input {
+  height: 32px;
+  padding: 0 10px 0 28px;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 7px;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  color: #111;
+  outline: none;
+  width: 190px;
+  transition: border-color 0.15s;
+}
+
+.search-wrap input:focus { border-color: #999; }
+.search-wrap input::placeholder { color: #ccc; }
+
+.filter-select {
+  height: 32px;
+  padding: 0 8px;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 7px;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  color: #555;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+}
+
+.balance-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.btn-toggle {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 5px 11px;
+  border-radius: 6px;
+  text-decoration: none;
+  white-space: nowrap;
+  font-family: 'Syne', sans-serif;
+  transition: background 0.12s;
+}
+
+.btn-block   { border: 0.5px solid #fca5a5; color: #991b1b; background: transparent; }
+.btn-block:hover { background: #fee2e2; }
+
+.resolved-tick {
+  font-size: 13px;
+  color: #ccc;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 32px;
+  font-size: 13px;
+  color: #aaa;
+  font-family: 'Syne', sans-serif;
+}
+</style>
+
+<script>
+function filterTable() {
+  const query  = document.getElementById('searchInput').value.toLowerCase();
+  const status = document.getElementById('statusFilter').value;
+  const rows   = document.querySelectorAll('#cardsTable tbody tr');
+  let visible  = 0;
+
+  rows.forEach(row => {
+    const matchSearch = !query ||
+      row.dataset.holder.includes(query) ||
+      row.dataset.phone.includes(query);
+    const matchStatus = !status || row.dataset.status === status;
+
+    const show = matchSearch && matchStatus;
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+
+  document.getElementById('visibleCount').textContent = visible + ' records';
+  document.getElementById('emptyState').style.display = visible === 0 ? 'block' : 'none';
+}
+</script>
+
+{% endblock %}

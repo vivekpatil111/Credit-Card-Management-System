@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CCMS - {% block title %}Dashboard{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="brand">
+    <div class="brand-icon">💳</div>
+    CCMS
+  </div>
+
+  <div class="nav-links">
+    {% if session.role == 'admin' %}
+      <a href="{{ url_for('admin_dashboard') }}" {% if request.endpoint == 'admin_dashboard' %}class="active"{% endif %}>Dashboard</a>
+      <a href="{{ url_for('admin_cardholders') }}" {% if request.endpoint == 'admin_cardholders' %}class="active"{% endif %}>Holders</a>
+      <a href="{{ url_for('admin_cards') }}" {% if request.endpoint == 'admin_cards' %}class="active"{% endif %}>Cards</a>
+      <a href="{{ url_for('admin_transactions') }}" {% if request.endpoint == 'admin_transactions' %}class="active"{% endif %}>Transactions</a>
+      <a href="{{ url_for('admin_bills') }}" {% if request.endpoint == 'admin_bills' %}class="active"{% endif %}>Bills</a>
+      <a href="{{ url_for('admin_payments') }}" {% if request.endpoint == 'admin_payments' %}class="active"{% endif %}>Payments</a>
+      <a href="{{ url_for('admin_fraud') }}" {% if request.endpoint == 'admin_fraud' %}class="active"{% endif %}>Fraud</a>
+      <a href="{{ url_for('admin_complaints') }}" {% if request.endpoint == 'admin_complaints' %}class="active"{% endif %}>Complaints</a>
+      <a href="{{ url_for('admin_rewards') }}" {% if request.endpoint == 'admin_rewards' %}class="active"{% endif %}>Rewards</a>
+      <a href="{{ url_for('admin_offers') }}" {% if request.endpoint == 'admin_offers' %}class="active"{% endif %}>Offers</a>
+      <a href="{{ url_for('admin_reports') }}" {% if request.endpoint == 'admin_reports' %}class="active"{% endif %}>Reports</a>
+    {% elif session.role == 'employee' %}
+      <a href="{{ url_for('emp_dashboard') }}" {% if request.endpoint == 'emp_dashboard' %}class="active"{% endif %}>Dashboard</a>
+      <a href="{{ url_for('emp_cards') }}" {% if request.endpoint == 'emp_cards' %}class="active"{% endif %}>Cards</a>
+      <a href="{{ url_for('emp_transactions') }}" {% if request.endpoint == 'emp_transactions' %}class="active"{% endif %}>Transactions</a>
+      <a href="{{ url_for('emp_bills') }}" {% if request.endpoint == 'emp_bills' %}class="active"{% endif %}>Bills</a>
+      <a href="{{ url_for('emp_complaints') }}" {% if request.endpoint == 'emp_complaints' %}class="active"{% endif %}>Complaints</a>
+      <a href="{{ url_for('emp_fraud') }}" {% if request.endpoint == 'emp_fraud' %}class="active"{% endif %}>Fraud</a>
+    {% elif session.role == 'cardholder' %}
+      <a href="{{ url_for('ch_dashboard') }}" {% if request.endpoint == 'ch_dashboard' %}class="active"{% endif %}>Dashboard</a>
+      <a href="{{ url_for('ch_cards') }}" {% if request.endpoint == 'ch_cards' %}class="active"{% endif %}>My Cards</a>
+      <a href="{{ url_for('ch_transactions') }}" {% if request.endpoint == 'ch_transactions' %}class="active"{% endif %}>Transactions</a>
+      <a href="{{ url_for('ch_bills') }}" {% if request.endpoint == 'ch_bills' %}class="active"{% endif %}>Bills</a>
+      <a href="{{ url_for('ch_payments') }}" {% if request.endpoint == 'ch_payments' %}class="active"{% endif %}>Payments</a>
+      <a href="{{ url_for('ch_rewards') }}" {% if request.endpoint == 'ch_rewards' %}class="active"{% endif %}>Rewards</a>
+      <a href="{{ url_for('ch_complaints') }}" {% if request.endpoint == 'ch_complaints' %}class="active"{% endif %}>Complaints</a>
+    {% endif %}
+
+    <div class="nav-divider"></div>
+    <a href="{{ url_for('logout') }}" class="logout">Logout</a>
+  </div>
+
+  <div class="nav-right">
+    <div class="user-badge">
+      <div class="user-avatar">{{ session.username[0]|upper }}{{ session.username[1]|upper if session.username|length > 1 else '' }}</div>
+      <span class="user-name">{{ session.username|capitalize }}</span>
+      <span class="role-pill {{ session.role }}">{{ session.role }}</span>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  {% for cat, msg in get_flashed_messages(with_categories=True) %}
+    <div class="alert alert-{{ cat }}">{{ msg }}</div>
+  {% endfor %}
+  {% block content %}{% endblock %}
+</div>
+
+</body>
+</html>

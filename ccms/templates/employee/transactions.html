@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+{% block title %}Transactions{% endblock %}
+{% block content %}
+
+<div class="wrap">
+
+  <div class="page-header">
+    <div>
+      <div class="page-title">Transaction Management</div>
+      <div class="page-sub">Log and monitor card transactions</div>
+    </div>
+  </div>
+
+
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total</div>
+      <div class="stat-val">{{ txns|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Successful</div>
+      <div class="stat-val success">{{ txns|selectattr('Txn_status','eq','Success')|list|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Failed</div>
+      <div class="stat-val danger">{{ txns|selectattr('Txn_status','eq','Failed')|list|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Pending</div>
+      <div class="stat-val warning">{{ txns|selectattr('Txn_status','eq','Pending')|list|length }}</div>
+    </div>
+  </div>
+
+  <!-- Transactions Table -->
+  <div class="card">
+    <div class="card-head">
+      <span class="card-head-title">All Transactions</span>
+      <div class="card-head-right">
+        <div class="search-wrap">
+          <svg class="search-icon" viewBox="0 0 16 16" fill="none">
+            <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.2"/>
+            <path d="M10 10l3 3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          <input type="text" id="searchInput" placeholder="Search holder, merchant..."
+                 oninput="filterTable()">
+        </div>
+        <select id="statusFilter" onchange="filterTable()" class="filter-select">
+          <option value="">All status</option>
+          <option value="Success">Success</option>
+          <option value="Failed">Failed</option>
+          <option value="Pending">Pending</option>
+        </select>
+        <span class="record-count" id="visibleCount">{{ txns|length }} records</span>
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table id="txnTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Date & Time</th>
+            <th>Cardholder</th>
+            <th>Merchant</th>
+            <th>Type</th>
+            <th style="text-align:right">Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in txns %}
+          <tr data-holder="{{ t.holder_name|lower }}"
+              data-merchant="{{ t.Merchant_name|lower }}"
+              data-status="{{ t.Txn_status }}">
+            <td><span class="holder-id">#{{ t.Txn_id }}</span></td>
+            <td>
+              <div class="datetime-wrap">
+                <span class="mono">{{ t.Txn_date }}</span>
+                <span class="time-sub">{{ t.Txn_time }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="avatar-wrap">
+                <div class="avatar">{{ t.holder_name.split()[0][0] }}{{ t.holder_name.split()[-1][0] }}</div>
+                <span class="holder-name">{{ t.holder_name }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="merchant-wrap">
+                <div class="merchant-icon">{{ t.Merchant_name[0] }}</div>
+                <span>{{ t.Merchant_name }}</span>
+              </div>
+            </td>
+            <td><span class="txn-type-pill">{{ t.Txn_type }}</span></td>
+            <td style="text-align:right">
+              <span class="amount {% if t.Txn_status == 'Failed' %}amount-failed{% endif %}">
+                ₹{{ "{:,.0f}".format(t.Txn_amount) }}
+              </span>
+            </td>
+            <td>
+              <span class="badge
+                {% if t.Txn_status == 'Success' %}badge-success
+                {% elif t.Txn_status == 'Failed' %}badge-danger
+                {% else %}badge-warning{% endif %}">
+                {{ t.Txn_status }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div id="emptyState" style="display:none" class="empty-state">
+        No transactions match your search.
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+.form-panel {
+  background: #fff;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px 24px 24px;
+}
+
+.form-panel-header {
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 0.5px solid #f0f0f0;
+}
+
+.form-panel-title { font-size: 14px; font-weight: 600; color: #111; }
+.form-panel-sub   { font-size: 12px; color: #888; margin-top: 3px; }
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-full  { grid-column: 1 / -1; }
+
+.form-group label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.form-group input,
+.form-group select {
+  height: 36px;
+  padding: 0 10px;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 7px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  color: #111;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.form-group input:focus,
+.form-group select:focus { border-color: #999; }
+.form-group input::placeholder { color: #ccc; }
+
+.btn-submit-form {
+  margin-top: 16px;
+  height: 38px;
+  padding: 0 20px;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-submit-form:hover { background: #333; }
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 0.5px solid #e0e0e0;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.card-head-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.search-wrap { position: relative; display: flex; align-items: center; }
+
+.search-icon {
+  position: absolute;
+  left: 9px;
+  width: 13px;
+  height: 13px;
+  color: #bbb;
+  pointer-events: none;
+}
+
+.search-wrap input {
+  height: 32px;
+  padding: 0 10px 0 28px;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 7px;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  color: #111;
+  outline: none;
+  width: 190px;
+  transition: border-color 0.15s;
+}
+
+.search-wrap input:focus { border-color: #999; }
+.search-wrap input::placeholder { color: #ccc; }
+
+.filter-select {
+  height: 32px;
+  padding: 0 8px;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 7px;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  color: #555;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+}
+
+.datetime-wrap { display: flex; flex-direction: column; gap: 2px; }
+.time-sub { font-family: 'DM Mono', monospace; font-size: 11px; color: #bbb; }
+
+.merchant-wrap { display: flex; align-items: center; gap: 8px; }
+
+.merchant-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: #f5f5f5;
+  border: 0.5px solid #e5e5e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  flex-shrink: 0;
+}
+
+.txn-type-pill {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: #e8f0fe;
+  color: #1a56db;
+  font-family: 'DM Mono', monospace;
+  white-space: nowrap;
+}
+
+.amount-failed { color: #991b1b; text-decoration: line-through; opacity: 0.6; }
+
+.empty-state {
+  text-align: center;
+  padding: 32px;
+  font-size: 13px;
+  color: #aaa;
+  font-family: 'Syne', sans-serif;
+}
+</style>
+
+<script>
+function filterTable() {
+  const query  = document.getElementById('searchInput').value.toLowerCase();
+  const status = document.getElementById('statusFilter').value;
+  const rows   = document.querySelectorAll('#txnTable tbody tr');
+  let visible  = 0;
+
+  rows.forEach(row => {
+    const matchSearch = !query ||
+      row.dataset.holder.includes(query) ||
+      row.dataset.merchant.includes(query);
+    const matchStatus = !status || row.dataset.status === status;
+
+    const show = matchSearch && matchStatus;
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+
+  document.getElementById('visibleCount').textContent = visible + ' records';
+  document.getElementById('emptyState').style.display = visible === 0 ? 'block' : 'none';
+}
+</script>
+
+{% endblock %}

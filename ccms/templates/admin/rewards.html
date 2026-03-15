@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+{% block title %}Rewards{% endblock %}
+{% block content %}
+
+<div class="wrap">
+
+  <div class="page-header">
+    <div>
+      <div class="page-title">Reward Points</div>
+      <div class="page-sub">Points earned, redeemed and balance across all cards</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total Cards</div>
+      <div class="stat-val">{{ rewards|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Earned</div>
+      <div class="stat-val" style="font-size:16px;color:#92400e;">
+        {{ "{:,}".format(rewards|sum(attribute='Points_earned')) }}
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Redeemed</div>
+      <div class="stat-val" style="font-size:16px;color:#991b1b;">
+        {{ "{:,}".format(rewards|sum(attribute='Points_redeemed')) }}
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Balance</div>
+      <div class="stat-val success" style="font-size:16px;">
+        {{ "{:,}".format(rewards|sum(attribute='Points_balance')) }}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <span class="card-head-title">Reward Points Overview</span>
+      <div class="card-head-right">
+        <div class="search-wrap">
+          <svg class="search-icon" viewBox="0 0 16 16" fill="none">
+            <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.2"/>
+            <path d="M10 10l3 3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          <input type="text" id="searchInput" placeholder="Search holder, card type..."
+                 oninput="filterTable()">
+        </div>
+        <span class="record-count" id="visibleCount">{{ rewards|length }} records</span>
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table id="rewardsTable">
+        <thead>
+          <tr>
+            <th>Cardholder</th>
+            <th>Card Type</th>
+            <th>Card No</th>
+            <th style="text-align:right">Earned</th>
+            <th style="text-align:right">Redeemed</th>
+            <th>Utilization</th>
+            <th style="text-align:right">Balance</th>
+            <th>Expiry</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rewards %}
+          {% set redeem_pct = (r.Points_redeemed / r.Points_earned * 100)|round if r.Points_earned > 0 else 0 %}
+          <tr data-holder="{{ r.holder_name|lower }}"
+              data-type="{{ r.Card_type|lower }}">
+            <td>
+              <div class="avatar-wrap">
+                <div class="avatar">{{ r.holder_name.split()[0][0] }}{{ r.holder_name.split()[-1][0] }}</div>
+                <span class="holder-name">{{ r.holder_name }}</span>
+              </div>
+            </td>
+            <td><span class="type-pill">{{ r.Card_type }}</span></td>
+            <td>
+              <div class="card-no-wrap">
+                <div class="card-chip"></div>
+                <span class="card-no">•••• •••• •••• {{ r.Card_no[-4:] }}</span>
+              </div>
+            </td>
+            <td style="text-align:right">
+              <span class="pts-earned">+{{ "{:,}".format(r.Points_earned) }}</span>
+            </td>
+            <td style="text-align:right">
+              <span class="pts-redeemed">-{{ "{:,}".format(r.Points_redeemed) }}</span>
+            </td>
+            <td>
+              <div class="util-wrap">
+                <div class="utilization-bar">
+                  <div class="utilization-fill
+                    {% if redeem_pct > 75 %}fill-danger
+                    {% elif redeem_pct > 40 %}fill-warning
+                    {% else %}fill-success{% endif %}"
+                    style="width:{{ redeem_pct }}%">
+                  </div>
+                </div>
+                <span class="util-pct
+                  {% if redeem_pct > 75 %}pct-danger
+                  {% elif redeem_pct > 40 %}pct-warning
+                  {% else %}pct-success{% endif %}">
+                  {{ redeem_pct }}%
+                </span>
+              </div>
+            </td>
+            <td style="text-align:right">
+              <span class="pts-badge">{{ "{:,}".format(r.Points_balance) }} pts</span>
+            </td>
+            <td><span class="mono">{{ r.Expiry_date }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div id="emptyState" style="display:none" class="empty-state">
+        No rewards match your search.
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 0.5px solid #e0e0e0;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.card-head-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 9px;
+  width: 13px;
+  height: 13px;
+  color: #bbb;
+  pointer-events: none;
+}
+
+.search-wrap input {
+  height: 32px;
+  padding: 0 10px 0 28px;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 7px;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  color: #111;
+  outline: none;
+  width: 200px;
+  transition: border-color 0.15s;
+}
+
+.search-wrap input:focus { border-color: #999; }
+.search-wrap input::placeholder { color: #ccc; }
+
+.pts-earned {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: #166534;
+}
+
+.pts-redeemed {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: #991b1b;
+}
+
+.pts-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: #fef3c7;
+  color: #92400e;
+  font-family: 'DM Mono', monospace;
+}
+
+.util-wrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.util-pct {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  min-width: 32px;
+}
+
+.pct-success { color: #166534; }
+.pct-warning { color: #92400e; }
+.pct-danger  { color: #991b1b; }
+
+.empty-state {
+  text-align: center;
+  padding: 32px;
+  font-size: 13px;
+  color: #aaa;
+  font-family: 'Syne', sans-serif;
+}
+</style>
+
+<script>
+function filterTable() {
+  const query = document.getElementById('searchInput').value.toLowerCase();
+  const rows  = document.querySelectorAll('#rewardsTable tbody tr');
+  let visible = 0;
+
+  rows.forEach(row => {
+    const show = !query ||
+      row.dataset.holder.includes(query) ||
+      row.dataset.type.includes(query);
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+
+  document.getElementById('visibleCount').textContent = visible + ' records';
+  document.getElementById('emptyState').style.display = visible === 0 ? 'block' : 'none';
+}
+</script>
+
+{% endblock %}
